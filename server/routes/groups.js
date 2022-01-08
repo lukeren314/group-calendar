@@ -39,7 +39,6 @@ router.get("/:groupId/calendars", (req, res) => {
     res.json({});
     return;
   }
-  
   const calendars = groupsManager
     .getGroup(req.params.groupId)
     .getCalendars();

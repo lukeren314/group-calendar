@@ -30,17 +30,7 @@
 </template>
 
 <script>
-// @ is an alias to /src
-async function fetchCreateNewGroup() {
-  const group = await fetch("http://localhost:8000/api/groups/new", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({}),
-  });
-  return await group.json();
-}
+import { fetchCreateNewGroup } from "../api/groups";
 
 export default {
   name: "Home",
@@ -60,7 +50,6 @@ export default {
       if (groupCode) {
         this.$router.push(`/groups/${groupCode}`);
       }
-      
     },
   },
   data: () => ({
