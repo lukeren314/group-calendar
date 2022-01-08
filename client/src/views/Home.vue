@@ -54,7 +54,7 @@ export default {
   },
   data: () => ({
     isLoading: false,
-    rules: [(value) => (value && value.length == 6) || "Invalid group code"],
+    rules: [(value) => (value && value.length == 6 && value.match(/^[0-9a-zA-Z]+$/)) || "Invalid group code"],
   }),
 };
 </script>
