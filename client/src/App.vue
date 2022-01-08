@@ -1,9 +1,10 @@
 <template>
   <div id="app">
     <v-app
-      ><v-app-bar color="primary" elevation="4" app>
-        <v-toolbar-title
-          >Group Calendar
+      ><v-app-bar color="primary" elevation="4" app dark>
+        <v-toolbar-title 
+          > 
+          ZotCalendar
           <v-icon>mdi-calendar-multiple</v-icon>
         </v-toolbar-title>
         <v-spacer></v-spacer>
