@@ -2,15 +2,23 @@
   <div id="app">
     <v-app
       ><v-app-bar color="primary" elevation="4" app dark>
-        <v-toolbar-title 
-          > 
+        <v-toolbar-title>
           ZotCalendar
           <v-icon>mdi-calendar-multiple</v-icon>
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn color="secondary" @click="redirectHome">Home</v-btn>
       </v-app-bar>
-      <v-main><router-view /></v-main>
+      <v-main><router-view @openSnackbar="openSnackbar"/></v-main>
+      <v-snackbar v-model="snackbar">
+        {{ text }}
+
+        <template v-slot:action="{ attrs }">
+          <v-btn color="pink" text v-bind="attrs" @click="snackbar = false">
+            Close
+          </v-btn>
+        </template>
+      </v-snackbar>
     </v-app>
   </div>
 </template>
@@ -25,7 +33,15 @@ export default {
       }
       this.$router.push("/");
     },
+    openSnackbar(text) {
+      this.snackbar = true;
+      this.text = text;
+    }
   },
+  data: () => ({
+    snackbar: false,
+    text: "",
+  }),
 };
 </script>
 

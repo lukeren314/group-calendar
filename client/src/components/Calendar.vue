@@ -7,7 +7,6 @@
           :now="today"
           :events="events"
           :event-color="getEventColor"
-          :weekdays="weekdays"
           color="primary"
           type="week"
           @click:event="showEvent"
@@ -22,6 +21,7 @@
             <v-toolbar :color="selectedEvent.color" dark>
               <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
               <v-spacer></v-spacer>
+              <v-icon v-if="selectedEvent.password">mdi-lock</v-icon>
               <v-btn icon @click="deleteEvent">
                 <v-icon>mdi-delete</v-icon>
               </v-btn>

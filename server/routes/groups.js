@@ -39,9 +39,7 @@ router.get("/:groupId/calendars", (req, res) => {
     res.json({});
     return;
   }
-  const calendars = groupsManager
-    .getGroup(req.params.groupId)
-    .getCalendars();
+  const calendars = groupsManager.getGroup(req.params.groupId).getCalendars();
   res.json(calendars);
 });
 
@@ -72,11 +70,20 @@ router.post("/:groupId/uploadCalendar", (req, res) => {
       });
       return;
     }
+
+    const group = groupsManager.getGroupOrCreate(req.params.groupId);
+    if (group.hasCalendarName(req.body.name)) {
+      res.send({
+        status: false,
+        message: "Calendar with name already exists",
+      });
+      return;
+    }
+
     const calendarData = calendarFile.data.toString("utf8");
     const calendarEvents = parseCalendarString(calendarData);
 
-    const group = groupsManager.getGroupOrCreate(req.params.groupId);
-    group.updateCalendar(req.body.name, calendarEvents);
+    group.updateCalendar(req.body.name, req.body.password, calendarEvents);
     const calendars = group.getCalendars();
     groupsManager.saveGroups();
     console.log("File is uploaded");
@@ -139,7 +146,25 @@ router.post("/:groupId/deleteCalendar", (req, res) => {
       return;
     }
     const group = groupsManager.getGroup(req.params.groupId);
-    group.deleteCalendar(req.body.calendarId);
+    if (group.calendarHasPassword(req.body.calendarId)) {
+      if (!req.body.password) {
+        res.send({
+          status: false,
+          message: "Calendar has a password!",
+        });
+        return;
+      }
+      if (
+        !group.calendarPasswordMatches(req.body.calendarId, req.body.password)
+      ) {
+        res.send({
+          status: false,
+          message: "Incorrect password!",
+        });
+        return;
+      }
+    }
+    group.deleteCalendar(req.body.calendarId, req.body.password);
     groupsManager.saveGroups();
     res.send({
       status: true,

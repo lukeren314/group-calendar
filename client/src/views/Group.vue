@@ -1,14 +1,22 @@
 <template>
   <div class="group">
-    <h1>Group Code: {{$route.params.id}}</h1>
+    <h1>Group Code: {{ $route.params.id }}</h1>
     <v-container fluid>
       <v-row>
-        <v-col align="center">
+        <v-col>
           <v-text-field
             label="Name"
             :rules="rules"
             hide-details="auto"
             v-model="name"
+          ></v-text-field>
+        </v-col>
+        <v-col>
+          <v-text-field
+            label="Password (optional)"
+            hide-details="auto"
+            v-model="password"
+            type="password"
           ></v-text-field>
         </v-col>
       </v-row>
@@ -21,7 +29,7 @@
             @file-uploaded="uploadCalendar"
           />
         </v-col>
-        <v-col><v-btn @click="clearCalendars">Clear Calendars</v-btn></v-col>
+        <!-- <v-col><v-btn @click="clearCalendars">Clear Calendars</v-btn></v-col> -->
       </v-row>
     </v-container>
 
@@ -35,7 +43,7 @@ import Calendar from "../components/Calendar.vue";
 import {
   fetchCalendars,
   fetchUploadCalendar,
-  fetchClearCalendars,
+  // fetchClearCalendars,
   fetchDeleteCalendar,
   extractEvents,
 } from "../api/calendars";
@@ -60,9 +68,13 @@ export default {
       const response = await fetchUploadCalendar(
         this.$route.params.id,
         calendarFile,
-        this.name
+        this.name,
+        this.password
       );
       console.log(response);
+      if (!response.status) {
+        this.$emit("openSnackbar", response.message);
+      }
       await this.loadCalendars();
     },
     async loadCalendars() {
@@ -70,23 +82,28 @@ export default {
       console.log(calendars);
       this.events = extractEvents(calendars);
     },
-    async clearCalendars() {
-      const response = await fetchClearCalendars(this.$route.params.id);
-      console.log(response);
-      await this.loadCalendars();
-    },
+    // async clearCalendars() {
+    //   const response = await fetchClearCalendars(this.$route.params.id);
+    //   console.log(response);
+    //   await this.loadCalendars();
+    // },
     async deleteEvent(event) {
       const response = await fetchDeleteCalendar(
         this.$route.params.id,
-        event.id
+        event.id,
+        this.password,
       );
       console.log(response);
+      if (!response.status) {
+        this.$emit("openSnackbar", response.message);
+      }
       await this.loadCalendars();
     },
   },
   data: () => ({
     uploadDialogue: false,
     name: "New User",
+    password: "",
     rules: [(value) => (value && value.length != 0) || "Invalid name"],
     events: [],
   }),

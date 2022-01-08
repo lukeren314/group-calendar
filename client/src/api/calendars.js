@@ -1,47 +1,83 @@
 import { getApiHost } from "./api";
 
 export async function fetchCalendars(groupId) {
-  const calendars = await fetch(getApiHost("/groups/" + groupId + "/calendars"), {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const calendars = await fetch(
+    getApiHost("/groups/" + groupId + "/calendars"),
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
   return await calendars.json();
 }
 
-export async function fetchUploadCalendar(groupId, calendarFile, name) {
+const cipher = salt => {
+  const textToChars = text => text.split('').map(c => c.charCodeAt(0));
+  const byteHex = n => ("0" + Number(n).toString(16)).substr(-2);
+  const applySaltToChar = code => textToChars(salt).reduce((a,b) => a ^ b, code);
+
+  return text => text.split('')
+    .map(textToChars)
+    .map(applySaltToChar)
+    .map(byteHex)
+    .join('');
+}
+const encrypt = cipher("foobar123");
+
+function encryptPassword(password) {
+  if (!password) {
+    return password;
+  }
+  return encrypt(password);
+}
+
+export async function fetchUploadCalendar(
+  groupId,
+  calendarFile,
+  name,
+  password
+) {
   const fd = new FormData();
   fd.append("calendar", calendarFile);
   fd.append("name", name);
-  const response = await fetch(getApiHost(`/groups/${groupId}/uploadCalendar`), {
-    method: "POST",
-    body: fd,
-  });
+  fd.append("password", encryptPassword(password));
+  const response = await fetch(
+    getApiHost(`/groups/${groupId}/uploadCalendar`),
+    {
+      method: "POST",
+      body: fd,
+    }
+  );
   return await response.json();
 }
 
-export async function fetchClearCalendars(groupId) {
-  const response = await fetch(getApiHost(`/groups/${groupId}/clearCalendars`), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  return await response.json();
-}
+// export async function fetchClearCalendars(groupId) {
+//   const response = await fetch(getApiHost(`/groups/${groupId}/clearCalendars`), {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//   });
+//   return await response.json();
+// }
 
-export async function fetchDeleteCalendar(groupId, calendarId) {
+export async function fetchDeleteCalendar(groupId, calendarId, password) {
   const data = {
     calendarId: calendarId,
+    password: encryptPassword(password),
   };
-  const response = await fetch(getApiHost(`/groups/${groupId}/deleteCalendar`), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+  const response = await fetch(
+    getApiHost(`/groups/${groupId}/deleteCalendar`),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
   return await response.json();
 }
 
@@ -85,6 +121,7 @@ export function extractEvents(calendars) {
             .toString()
             .padStart(2, "0")}`,
           color: colors[calendarI % colors.length],
+          password: calendar.password,
         };
         console.log(calendarEvent);
         return calendarEvent;
