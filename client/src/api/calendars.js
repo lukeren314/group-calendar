@@ -1,5 +1,7 @@
+import { getApiHost } from "./api";
+
 export async function fetchCalendars(groupId) {
-  const calendars = await fetch("/api/groups/" + groupId + "/calendars", {
+  const calendars = await fetch(getApiHost("/groups/" + groupId + "/calendars"), {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -12,7 +14,7 @@ export async function fetchUploadCalendar(groupId, calendarFile, name) {
   const fd = new FormData();
   fd.append("calendar", calendarFile);
   fd.append("name", name);
-  const response = await fetch(`/api/groups/${groupId}/uploadCalendar`, {
+  const response = await fetch(getApiHost(`/groups/${groupId}/uploadCalendar`), {
     method: "POST",
     body: fd,
   });
@@ -20,7 +22,7 @@ export async function fetchUploadCalendar(groupId, calendarFile, name) {
 }
 
 export async function fetchClearCalendars(groupId) {
-  const response = await fetch(`/api/groups/${groupId}/clearCalendars`, {
+  const response = await fetch(getApiHost(`/groups/${groupId}/clearCalendars`), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -33,7 +35,7 @@ export async function fetchDeleteCalendar(groupId, calendarId) {
   const data = {
     calendarId: calendarId,
   };
-  const response = await fetch(`/api/groups/${groupId}/deleteCalendar`, {
+  const response = await fetch(getApiHost(`/groups/${groupId}/deleteCalendar`), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

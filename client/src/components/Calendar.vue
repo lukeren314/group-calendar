@@ -5,7 +5,6 @@
         <v-calendar
           ref="calendar"
           :now="today"
-          :value="today"
           :events="events"
           :event-color="getEventColor"
           :weekdays="weekdays"

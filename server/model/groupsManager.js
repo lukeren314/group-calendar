@@ -8,7 +8,7 @@ class GroupsManager {
   }
   createTemporaryGroup() {
     const id = this.generateGroupId();
-    return new Group(groupId);
+    return new Group(id);
   }
   createNewGroup() {
     const id = this.generateGroupId();
