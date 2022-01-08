@@ -21,6 +21,8 @@
   "homepage": "https://github.com/lukeren314/group-calendar#readme",
   "dependencies": {
     "@vue/cli": "^4.5.15",
+    "@vue/cli-plugin-babel": "^4.5.15",
+    "@vue/cli-plugin-eslint": "^4.5.15",
     "@vue/cli-service": "^4.5.15",
     "body-parser": "^1.19.1",
     "cors": "^2.8.5",
