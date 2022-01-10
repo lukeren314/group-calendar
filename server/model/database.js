@@ -1,11 +1,15 @@
 const Pool = require("pg").Pool;
 
+// connecting client
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 // define schema
-console.log("Defining schema")
+console.log("Defining schema");
 pool.query(`
 CREATE TABLE IF NOT EXISTS Groups (
     group_id text PRIMARY KEY,
