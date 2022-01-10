@@ -1,17 +1,17 @@
 
-CREATE TABLE Groups (
+CREATE TABLE IF NOT EXISTS  Groups (
     group_id text PRIMARY KEY,
     last_modified bigint
 );
 
-CREATE TABLE Calendars (
+CREATE TABLE IF NOT EXISTS  Calendars (
     calendar_id SERIAL PRIMARY KEY,
     calendar_name text,
     calendar_password text,
     group_id text REFERENCES Groups(group_id)
 );
 
-CREATE TABLE Events (
+CREATE TABLE IF NOT EXISTS  Events (
     event_id SERIAL PRIMARY KEY,
     day_of_week int,
     start_hour int,

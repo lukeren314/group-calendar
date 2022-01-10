@@ -1,12 +1,32 @@
 const Pool = require("pg").Pool;
 
 const pool = new Pool({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  post: process.env.PG_PORT,
+  connectionString: process.env.DATABASE_URL,
 });
+
+// define schema
+console.log("Defining schema")
+pool.query(`
+CREATE TABLE IF NOT EXISTS Groups (
+    group_id text PRIMARY KEY,
+    last_modified bigint
+);
+
+CREATE TABLE IF NOT EXISTS  Calendars (
+    calendar_id SERIAL PRIMARY KEY,
+    calendar_name text,
+    calendar_password text,
+    group_id text REFERENCES Groups(group_id)
+);
+
+CREATE TABLE IF NOT EXISTS  Events (
+    event_id SERIAL PRIMARY KEY,
+    day_of_week int,
+    start_hour int,
+    start_minute int,
+    duration int,
+    calendar_id int REFERENCES Calendars(calendar_id)
+)`);
 
 async function hasGroupId(groupId) {
   const res = await queryDB("SELECT * FROM Groups WHERE group_id=$1", [
