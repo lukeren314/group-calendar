@@ -60,9 +60,6 @@ class Group {
   ping() {
     this.lastModified = Date.now();
   }
-  lastModified() {
-    return this.lastModified;
-  }
   fromJson(json) {
     this.id = json.id;
     this.calendars = json.calendars;

@@ -38,9 +38,9 @@ class GroupsManager {
     for (let groupId in this.groups) {
       // if not modified in 100 days
       if (
-        this.groups[groupId].lastModified() + 1000 * 60 * 60 * 24 * 100 <
+        this.groups[groupId].lastModified + 1000 * 60 * 60 * 24 * 100 <
           Date.now() ||
-        this.groups[groupId].getCalendars().length == 0
+          Object.keys(this.groups[groupId].getCalendars()).length === 0
       ) {
         delete this.groups[groupId];
       }
