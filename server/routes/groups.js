@@ -15,35 +15,43 @@ try {
   console.log(err);
 }
 const groupsManager = new GroupsManager(DATA_PATH);
-groupsManager.loadGroups();
 
-function cleanGroupsJob() {
-  setTimeout(() => {
-    groupsManager.cleanGroups();
-    cleanGroupsJob();
-  }, 1000 * 60 * 60 * 24 * 7);
-}
-cleanGroupsJob();
+// function cleanGroupsJob() {
+//   setTimeout(() => {
+//     console.log("Cleaning groups");
+//     groupsManager.cleanGroups();
+//     cleanGroupsJob();
+//   }, 1000 * 60 * 60 * 24 * 7);
+// }
+// cleanGroupsJob();
 
-router.post("/new", (req, res) => {
-  const group = groupsManager.createTemporaryGroup();
-  res.json(group);
+router.post("/new", async (req, res) => {
+  const groupId = await groupsManager.createNewGroup();
+  res.json({
+    id: groupId,
+  });
 });
 
-router.get("/groups", (req, res) => {
-  res.json(groupsManager.getGroups());
-});
-
-router.get("/:groupId/calendars", (req, res) => {
-  if (!groupsManager.hasGroup(req.params.groupId)) {
+router.get("/:groupId/calendars", async (req, res) => {
+  const groupId = req.params.groupId;
+  if (!groupId) {
+    console.log("Invalid request");
+    res.send({
+      status: false,
+      message: "Invalid request",
+    });
+    return;
+  }
+  if (!(await groupsManager.hasGroup(groupId))) {
     res.json({});
     return;
   }
-  const calendars = groupsManager.getGroup(req.params.groupId).getCalendars();
+  await groupsManager.pingGroup(groupId);
+  const calendars = await groupsManager.getCalendars(groupId);
   res.json(calendars);
 });
 
-router.post("/:groupId/uploadCalendar", (req, res) => {
+router.post("/:groupId/uploadCalendar", async (req, res) => {
   try {
     if (!req.files) {
       console.log("No file uploaded");
@@ -54,7 +62,7 @@ router.post("/:groupId/uploadCalendar", (req, res) => {
       return;
     }
     const calendarFile = req.files.calendar;
-    if (!calendarFile || !req.body || !req.body.name) {
+    if (!calendarFile || !req.body) {
       console.log("Invalid request");
       res.send({
         status: false,
@@ -70,9 +78,33 @@ router.post("/:groupId/uploadCalendar", (req, res) => {
       });
       return;
     }
-
-    const group = groupsManager.getGroupOrCreate(req.params.groupId);
-    if (group.hasCalendarName(req.body.name)) {
+    const groupId = req.params.groupId;
+    const calendarName = req.body.name;
+    const calendarPassword = req.body.password;
+    if (!calendarName || calendarName.length == 0) {
+      res.send({
+        status: false,
+        message: "Calendar needs a name!",
+      });
+      return;
+    }
+    if (calendarName.length > 256) {
+      res.send({
+        status: false,
+        message: "Calendar name too long!",
+      });
+      return;
+    }
+    if (calendarPassword.length > 256) {
+      res.send({
+        status: false,
+        message: "Calendar password too long!",
+      });
+      return;
+    }
+    await groupsManager.createGroupIfNotExists(groupId);
+    if (await groupsManager.hasCalendarName(calendarName)) {
+      console.log("Calendar with name already exists");
       res.send({
         status: false,
         message: "Calendar with name already exists",
@@ -83,9 +115,36 @@ router.post("/:groupId/uploadCalendar", (req, res) => {
     const calendarData = calendarFile.data.toString("utf8");
     const calendarEvents = parseCalendarString(calendarData);
 
-    group.updateCalendar(req.body.name, req.body.password, calendarEvents);
-    const calendars = group.getCalendars();
-    groupsManager.saveGroups();
+    if (await groupsManager.calendarHasPassword(groupId, calendarName)) {
+      if (!calendarPassword) {
+        res.send({
+          status: false,
+          message: "Calendar has a password!",
+        });
+        return;
+      }
+      if (
+        !await groupsManager.calendarPasswordMatches(
+          groupId,
+          calendarName,
+          calendarPassword
+        )
+      ) {
+        res.send({
+          status: false,
+          message: "Incorrect password!",
+        });
+        return;
+      }
+    }
+
+    await groupsManager.createCalendar(
+      groupId,
+      calendarName,
+      calendarPassword,
+      calendarEvents
+    );
+    const calendars = await groupsManager.getCalendars(groupId);
     console.log("File is uploaded");
     //send response
     res.send({
@@ -104,32 +163,32 @@ router.post("/:groupId/uploadCalendar", (req, res) => {
   }
 });
 
-router.post("/:groupId/clearCalendars", (req, res) => {
-  try {
-    if (!groupsManager.hasGroup(req.params.groupId)) {
-      console.log("Group not found");
-      res.send({
-        status: false,
-        message: "Group not found",
-      });
-      return;
-    }
-    const group = groupsManager.getGroup(req.params.groupId);
-    group.clearCalendars();
-    groupsManager.saveGroups();
-    res.send({
-      status: true,
-      message: "Calendars cleared",
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).send(err);
-  }
-});
+// router.post("/:groupId/clearCalendars", (req, res) => {
+//   try {
+//     if (!await groupsManager.hasGroup(req.params.groupId)) {
+//       console.log("Group not found");
+//       res.send({
+//         status: false,
+//         message: "Group not found",
+//       });
+//       return;
+//     }
+//     const group = await groupsManager.getGroup(req.params.groupId);
+//     group.clearCalendars();
+//     groupsManager.saveGroups();
+//     res.send({
+//       status: true,
+//       message: "Calendars cleared",
+//     });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).send(err);
+//   }
+// });
 
-router.post("/:groupId/deleteCalendar", (req, res) => {
+router.post("/:groupId/deleteCalendar", async (req, res) => {
   try {
-    if (!req.body || !req.body.calendarId) {
+    if (!req.body || !req.body.name) {
       console.log("Invalid request");
       res.send({
         status: false,
@@ -137,7 +196,8 @@ router.post("/:groupId/deleteCalendar", (req, res) => {
       });
       return;
     }
-    if (!groupsManager.hasGroup(req.params.groupId)) {
+    const groupId = req.params.groupId;
+    if (!(await groupsManager.hasGroup(groupId))) {
       console.log("Group not found");
       res.send({
         status: false,
@@ -145,9 +205,17 @@ router.post("/:groupId/deleteCalendar", (req, res) => {
       });
       return;
     }
-    const group = groupsManager.getGroup(req.params.groupId);
-    if (group.calendarHasPassword(req.body.calendarId)) {
-      if (!req.body.password) {
+    const calendarPassword = req.body.password;
+    const calendarName = req.body.name;
+    if (!(await groupsManager.hasCalendarName(groupId, calendarName))) {
+      res.send({
+        status: false,
+        message: "Calendar doesn't exist!",
+      });
+      return;
+    }
+    if (await groupsManager.calendarHasPassword(groupId, calendarName)) {
+      if (!calendarPassword) {
         res.send({
           status: false,
           message: "Calendar has a password!",
@@ -155,7 +223,11 @@ router.post("/:groupId/deleteCalendar", (req, res) => {
         return;
       }
       if (
-        !group.calendarPasswordMatches(req.body.calendarId, req.body.password)
+        !(await groupsManager.calendarPasswordMatches(
+          groupId,
+          calendarName,
+          calendarPassword
+        ))
       ) {
         res.send({
           status: false,
@@ -164,8 +236,7 @@ router.post("/:groupId/deleteCalendar", (req, res) => {
         return;
       }
     }
-    group.deleteCalendar(req.body.calendarId, req.body.password);
-    groupsManager.saveGroups();
+    await groupsManager.deleteCalendar(groupId, calendarName);
     res.send({
       status: true,
       message: "Calendars cleared",

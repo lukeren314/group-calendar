@@ -13,17 +13,15 @@ export async function fetchCalendars(groupId) {
   return await calendars.json();
 }
 
-const cipher = salt => {
-  const textToChars = text => text.split('').map(c => c.charCodeAt(0));
-  const byteHex = n => ("0" + Number(n).toString(16)).substr(-2);
-  const applySaltToChar = code => textToChars(salt).reduce((a,b) => a ^ b, code);
+const cipher = (salt) => {
+  const textToChars = (text) => text.split("").map((c) => c.charCodeAt(0));
+  const byteHex = (n) => ("0" + Number(n).toString(16)).substr(-2);
+  const applySaltToChar = (code) =>
+    textToChars(salt).reduce((a, b) => a ^ b, code);
 
-  return text => text.split('')
-    .map(textToChars)
-    .map(applySaltToChar)
-    .map(byteHex)
-    .join('');
-}
+  return (text) =>
+    text.split("").map(textToChars).map(applySaltToChar).map(byteHex).join("");
+};
 const encrypt = cipher("foobar123");
 
 function encryptPassword(password) {
@@ -63,9 +61,9 @@ export async function fetchUploadCalendar(
 //   return await response.json();
 // }
 
-export async function fetchDeleteCalendar(groupId, calendarId, password) {
+export async function fetchDeleteCalendar(groupId, calendarName, password) {
   const data = {
-    calendarId: calendarId,
+    name: calendarName,
     password: encryptPassword(password),
   };
   const response = await fetch(
@@ -102,7 +100,9 @@ export function extractEvents(calendars) {
         const startDate = new Date(
           date.getTime() + (event.dayOfWeek - date.getDay()) * 86400000
         );
-        const endDate = new Date(startDate.getTime() + event.duration);
+        const endDate = new Date(
+          startDate.getTime() + parseInt(event.duration)
+        );
         const calendarEvent = {
           id: calendar.id,
           name: calendar.name,

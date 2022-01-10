@@ -74,6 +74,7 @@ export default {
       console.log(response);
       if (!response.status) {
         this.$emit("openSnackbar", response.message);
+        return;
       }
       await this.loadCalendars();
     },
@@ -90,7 +91,7 @@ export default {
     async deleteEvent(event) {
       const response = await fetchDeleteCalendar(
         this.$route.params.id,
-        event.id,
+        event.name,
         this.password,
       );
       console.log(response);

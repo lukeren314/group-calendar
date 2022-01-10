@@ -1,5 +1,9 @@
 const express = require("express");
 const dotenv = require("dotenv");
+
+// Load environment variables from .env file
+dotenv.config();
+
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const morgan = require("morgan");
@@ -8,8 +12,6 @@ const fileUpload = require("express-fileupload");
 const path = require("path");
 const routes = require("./routes"); // import routes from routes/index.js
 
-// Load environment variables from .env file
-dotenv.config({ path: __dirname + "/.env" });
 
 // create the application
 const app = express();
